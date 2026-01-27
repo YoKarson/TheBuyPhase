@@ -119,6 +119,7 @@
 
 .team-name {
   font-weight: 500;
+  color: #fff;
 }
 
 .score {
@@ -156,4 +157,221 @@
 
 .error h2 {
   margin-bottom: 1rem;
+}
+
+/* Clickable Match Cards */
+.match-card.clickable {
+  cursor: pointer;
+}
+
+.match-card.clickable:hover {
+  border-color: #00aeef;
+  background: #1a2744;
+}
+
+/* Scouting Report Page */
+.scouting-report {
+  padding: 1rem 0;
+}
+
+.back-btn {
+  background: #1f4068;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+}
+
+.back-btn:hover {
+  background: #2a5080;
+}
+
+.report-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #333;
+}
+
+.report-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #888;
+}
+
+.report-header h2 {
+  margin: 0.5rem 0;
+  font-size: 2rem;
+  color: #00aeef;
+}
+
+.series-info {
+  color: #666;
+  font-size: 0.875rem;
+}
+
+/* Metrics */
+.metrics-section {
+  margin-bottom: 2rem;
+}
+
+.metrics-section h3 {
+  font-size: 1.1rem;
+  color: #fff;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #333;
+  padding-bottom: 0.5rem;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
+.metric-card {
+  background: #16213e;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  border: 1px solid #1f4068;
+}
+
+.metric-card.highlight {
+  border-color: #ff6b6b;
+  background: #2a1a1a;
+}
+
+.metric-value {
+  font-size: 1.75rem;
+  font-weight: bold;
+  color: #00aeef;
+}
+
+.metric-card.highlight .metric-value {
+  color: #ff6b6b;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 0.25rem;
+}
+
+.metric-sublabel {
+  font-size: 0.7rem;
+  color: #555;
+  margin-top: 0.25rem;
+}
+
+/* Insight Box */
+.insight-box {
+  background: #1a2744;
+  border-left: 3px solid #00aeef;
+  padding: 1rem;
+  margin-top: 1rem;
+  border-radius: 0 4px 4px 0;
+}
+
+.insight-box.warning {
+  border-left-color: #ff6b6b;
+  background: #2a1a1a;
+}
+
+.insight-box p {
+  margin: 0.5rem 0;
+}
+
+.insight-box p:first-child {
+  margin-top: 0;
+}
+
+/* Player Table */
+.player-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.player-table th,
+.player-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #1f4068;
+}
+
+.player-table th {
+  color: #888;
+  font-weight: 500;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.player-table td {
+  color: #fff;
+}
+
+.player-name {
+  font-weight: 500;
+}
+
+.stat-low {
+  color: #ff6b6b;
+}
+
+.stat-high {
+  color: #4ade80;
+}
+
+/* Game Cards */
+.game-card {
+  background: #16213e;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid #1f4068;
+}
+
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.map-name {
+  color: #00aeef;
+  font-weight: 500;
+}
+
+.game-score {
+  color: #fff;
+  font-weight: bold;
+}
+
+.game-teams {
+  display: flex;
+  gap: 1rem;
+}
+
+.game-team {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem;
+  border-radius: 4px;
+  background: #0f0f1a;
+}
+
+.game-team.winner {
+  background: #1a3a2a;
+}
+
+.game-team span:first-child {
+  color: #fff;
+}
+
+.game-team span:last-child {
+  color: #888;
 }

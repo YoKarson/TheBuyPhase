@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { getUpcomingSeries, getRecentSeries, getC9Organization } from '../api/centralData';
+import { getC9Matches, getC9Organization } from '../api/centralData';
 
-export default function Home() {
+export default function Home({ onMatchClick }) {
   const [org, setOrg] = useState(null);
   const [upcomingMatches, setUpcomingMatches] = useState([]);
   const [recentMatches, setRecentMatches] = useState([]);
@@ -14,15 +14,14 @@ export default function Home() {
         setLoading(true);
         setError(null);
 
-        const [orgData, upcoming, recent] = await Promise.all([
+        const [orgData, matches] = await Promise.all([
           getC9Organization(),
-          getUpcomingSeries('Cloud9'),
-          getRecentSeries('Cloud9', 30),
+          getC9Matches(),
         ]);
 
         setOrg(orgData);
-        setUpcomingMatches(upcoming);
-        setRecentMatches(recent);
+        setUpcomingMatches([]);
+        setRecentMatches(matches);
       } catch (err) {
         console.error('Failed to fetch data:', err);
         setError(err.message);
@@ -67,26 +66,18 @@ export default function Home() {
       )}
 
       <section className="matches-section">
-        <h2>Upcoming Matches</h2>
-        {upcomingMatches.length === 0 ? (
-          <p className="no-matches">No upcoming matches scheduled in the next 7 days</p>
-        ) : (
-          <div className="matches-list">
-            {upcomingMatches.map(match => (
-              <MatchCard key={match.id} match={match} />
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="matches-section">
-        <h2>Recent Matches (Last 30 Days)</h2>
+        <h2>Cloud9 Valorant Matches From Kickoff 2024</h2>
         {recentMatches.length === 0 ? (
-          <p className="no-matches">No recent matches found</p>
+          <p className="no-matches">No C9 Valorant matches found in available data</p>
         ) : (
           <div className="matches-list">
             {recentMatches.map(match => (
-              <MatchCard key={match.id} match={match} isRecent />
+              <MatchCard
+                key={match.id}
+                match={match}
+                isRecent
+                onClick={() => onMatchClick?.(match)}
+              />
             ))}
           </div>
         )}
@@ -95,7 +86,7 @@ export default function Home() {
   );
 }
 
-function MatchCard({ match, isRecent = false }) {
+function MatchCard({ match, isRecent = false, onClick }) {
   const team1 = match.teams[0]?.baseInfo;
   const team2 = match.teams[1]?.baseInfo;
   const score1 = match.teams[0]?.scoreAdvantage || 0;
@@ -113,7 +104,7 @@ function MatchCard({ match, isRecent = false }) {
   });
 
   return (
-    <div className="match-card">
+    <div className={`match-card ${onClick ? 'clickable' : ''}`} onClick={onClick}>
       <div className="match-meta">
         <span className="tournament">{match.tournament?.nameShortened || match.tournament?.name}</span>
         <span className="format">{match.format?.nameShortened}</span>

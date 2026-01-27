@@ -3,6 +3,9 @@ import { gridQuery } from './gridClient';
 // Cloud9 organization ID
 const C9_ORG_ID = '1';
 
+// VCT Americas Kickoff 2024 - Groups (has C9 matches)
+const VCT_AMERICAS_TOURNAMENT_ID = '757073';
+
 export async function getC9Organization() {
   const query = `
     query GetC9Organization($id: ID!) {
@@ -21,38 +24,21 @@ export async function getC9Organization() {
   return data.organization;
 }
 
-export async function getC9ValorantTeam() {
-  const org = await getC9Organization();
-  // Find the main Valorant team (not Cloud9 White, etc.)
-  // We'll need to filter by title - for now return all teams
-  return org?.teams || [];
-}
-
-export async function getUpcomingSeries(teamName = 'Cloud9') {
-  // Get series scheduled from now onwards
-  const now = new Date().toISOString();
-  const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
+export async function getC9Matches() {
   const query = `
-    query GetUpcomingSeries($gte: String!, $lte: String!) {
+    query GetSeriesByTournament($tournamentId: ID!) {
       allSeries(
         filter: {
-          startTimeScheduled: {
-            gte: $gte
-            lte: $lte
-          }
+          tournamentId: $tournamentId
         }
-        orderBy: StartTimeScheduled
         first: 50
+        orderBy: StartTimeScheduled
       ) {
         totalCount
         edges {
           node {
             id
             startTimeScheduled
-            title {
-              name
-            }
             format {
               name
               nameShortened
@@ -76,75 +62,15 @@ export async function getUpcomingSeries(teamName = 'Cloud9') {
     }
   `;
 
-  const data = await gridQuery('centralData', query, { gte: now, lte: nextWeek });
+  const data = await gridQuery('centralData', query, { tournamentId: VCT_AMERICAS_TOURNAMENT_ID });
+  const allSeries = data.allSeries.edges.map(e => e.node);
 
-  // Filter to only Valorant series that include the specified team
-  const allSeries = data.allSeries.edges.map(edge => edge.node);
-
-  return allSeries.filter(series =>
-    series.title?.name?.toLowerCase() === 'valorant' &&
-    series.teams.some(team =>
-      team.baseInfo?.name?.toLowerCase().includes(teamName.toLowerCase())
-    )
+  // Filter to C9 matches only
+  const c9Matches = allSeries.filter(series =>
+    series.teams.some(t => t.baseInfo?.name?.toLowerCase().includes('cloud9'))
   );
-}
 
-export async function getRecentSeries(teamName = 'Cloud9', days = 30) {
-  const now = new Date().toISOString();
-  const pastDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+  console.log('C9 matches found:', c9Matches.length);
 
-  const query = `
-    query GetRecentSeries($gte: String!, $lte: String!) {
-      allSeries(
-        filter: {
-          startTimeScheduled: {
-            gte: $gte
-            lte: $lte
-          }
-        }
-        orderBy: StartTimeScheduled
-        first: 50
-      ) {
-        totalCount
-        edges {
-          node {
-            id
-            startTimeScheduled
-            title {
-              name
-            }
-            format {
-              name
-              nameShortened
-            }
-            tournament {
-              id
-              name
-              nameShortened
-            }
-            teams {
-              baseInfo {
-                id
-                name
-                logoUrl
-              }
-              scoreAdvantage
-            }
-          }
-        }
-      }
-    }
-  `;
-
-  const data = await gridQuery('centralData', query, { gte: pastDate, lte: now });
-
-  const allSeries = data.allSeries.edges.map(edge => edge.node);
-
-  // Filter to only Valorant series that include the specified team
-  return allSeries.filter(series =>
-    series.title?.name?.toLowerCase() === 'valorant' &&
-    series.teams.some(team =>
-      team.baseInfo?.name?.toLowerCase().includes(teamName.toLowerCase())
-    )
-  );
+  return c9Matches;
 }

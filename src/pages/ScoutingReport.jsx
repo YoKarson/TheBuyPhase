@@ -1,0 +1,218 @@
+import { useState, useEffect } from 'react';
+import { getSeriesState, computeScoutingMetrics } from '../api/seriesState';
+
+export default function ScoutingReport({ seriesId, opponent, onBack }) {
+  const [seriesState, setSeriesState] = useState(null);
+  const [metrics, setMetrics] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const state = await getSeriesState(seriesId);
+        setSeriesState(state);
+
+        if (state && opponent) {
+          const computed = computeScoutingMetrics(state, opponent);
+          setMetrics(computed);
+        }
+      } catch (err) {
+        console.error('Failed to fetch series state:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (seriesId) {
+      fetchData();
+    }
+  }, [seriesId, opponent]);
+
+  if (loading) {
+    return (
+      <div className="scouting-report">
+        <button className="back-btn" onClick={onBack}>Back</button>
+        <p>Loading scouting data...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="scouting-report">
+        <button className="back-btn" onClick={onBack}>Back</button>
+        <div className="error">
+          <h2>Error loading data</h2>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!seriesState) {
+    return (
+      <div className="scouting-report">
+        <button className="back-btn" onClick={onBack}>Back</button>
+        <p>No data available for this series.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="scouting-report">
+      <button className="back-btn" onClick={onBack}>Back to Matches</button>
+
+      <header className="report-header">
+        <h1>Scouting Report</h1>
+        <h2>{opponent}</h2>
+        <p className="series-info">
+          Series {seriesState.id} - {seriesState.format}
+          {seriesState.finished ? ' (Finished)' : ' (In Progress)'}
+        </p>
+      </header>
+
+      {metrics && (
+        <>
+          <section className="metrics-section">
+            <h3>Match Overview</h3>
+            <div className="metrics-grid">
+              <MetricCard
+                label="Games"
+                value={`${metrics.gamesWon}/${metrics.gamesPlayed}`}
+                sublabel="Won/Played"
+              />
+              <MetricCard
+                label="Round Win Rate"
+                value={`${metrics.winRate}%`}
+                sublabel={`${metrics.roundsWon}/${metrics.roundsPlayed}`}
+              />
+              <MetricCard
+                label="Attack Win Rate"
+                value={`${metrics.attackWinRate}%`}
+                sublabel={`${metrics.attackRoundsWon}/${metrics.attackRoundsPlayed}`}
+              />
+              <MetricCard
+                label="Defense Win Rate"
+                value={`${metrics.defenseWinRate}%`}
+                sublabel={`${metrics.defenseRoundsWon}/${metrics.defenseRoundsPlayed}`}
+              />
+            </div>
+          </section>
+
+          <section className="metrics-section">
+            <h3>First Blood Analysis</h3>
+            <div className="metrics-grid">
+              <MetricCard
+                label="First Bloods"
+                value={metrics.firstBloodRounds}
+                sublabel="Rounds with FB"
+              />
+              <MetricCard
+                label="FB Conversion"
+                value={`${metrics.firstBloodConversion}%`}
+                sublabel="Win rate after FB"
+                highlight={parseFloat(metrics.firstBloodConversion) < 70}
+              />
+              <MetricCard
+                label="FB Losses"
+                value={metrics.firstBloodLosses}
+                sublabel="Lost after getting FB"
+                highlight={metrics.firstBloodLosses > 2}
+              />
+            </div>
+            {metrics.firstBloodLosses > 0 && (
+              <div className="insight-box warning">
+                <strong>Exploit:</strong> {opponent} lost {metrics.firstBloodLosses} rounds
+                after getting first blood ({((metrics.firstBloodLosses / metrics.firstBloodRounds) * 100).toFixed(0)}% choke rate).
+                They struggle to convert advantages.
+              </div>
+            )}
+          </section>
+
+          <section className="metrics-section">
+            <h3>Player Performance</h3>
+            <table className="player-table">
+              <thead>
+                <tr>
+                  <th>Player</th>
+                  <th>K</th>
+                  <th>D</th>
+                  <th>K/D</th>
+                  <th>First Kill %</th>
+                </tr>
+              </thead>
+              <tbody>
+                {metrics.playerStats.map(player => (
+                  <tr key={player.name}>
+                    <td className="player-name">{player.name}</td>
+                    <td>{player.kills}</td>
+                    <td>{player.deaths}</td>
+                    <td className={parseFloat(player.kd) < 1 ? 'stat-low' : 'stat-high'}>
+                      {player.kd}
+                    </td>
+                    <td>{player.firstKillRate}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+
+          {/* Find weak links */}
+          {metrics.playerStats.some(p => parseFloat(p.kd) < 0.8) && (
+            <section className="metrics-section">
+              <h3>Weak Links</h3>
+              <div className="insight-box">
+                {metrics.playerStats
+                  .filter(p => parseFloat(p.kd) < 0.8)
+                  .map(p => (
+                    <p key={p.name}>
+                      <strong>{p.name}</strong> has a {p.kd} K/D ratio -
+                      target this player for trades.
+                    </p>
+                  ))}
+              </div>
+            </section>
+          )}
+        </>
+      )}
+
+      {/* Games breakdown */}
+      <section className="metrics-section">
+        <h3>Games</h3>
+        {seriesState.games?.map(game => (
+          <div key={game.id} className="game-card">
+            <div className="game-header">
+              <span className="map-name">{game.map?.name || 'Unknown Map'}</span>
+              <span className="game-score">
+                {game.teams.map(t => t.score).join(' - ')}
+              </span>
+            </div>
+            <div className="game-teams">
+              {game.teams.map(team => (
+                <div key={team.id} className={`game-team ${team.won ? 'winner' : ''}`}>
+                  <span>{team.name}</span>
+                  <span>{team.score} rounds</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </section>
+    </div>
+  );
+}
+
+function MetricCard({ label, value, sublabel, highlight }) {
+  return (
+    <div className={`metric-card ${highlight ? 'highlight' : ''}`}>
+      <div className="metric-value">{value}</div>
+      <div className="metric-label">{label}</div>
+      {sublabel && <div className="metric-sublabel">{sublabel}</div>}
+    </div>
+  );
+}
