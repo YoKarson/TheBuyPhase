@@ -1,0 +1,144 @@
+import { useState, useEffect } from 'react';
+import { getUpcomingSeries, getRecentSeries, getC9Organization } from '../api/centralData';
+
+export default function Home() {
+  const [org, setOrg] = useState(null);
+  const [upcomingMatches, setUpcomingMatches] = useState([]);
+  const [recentMatches, setRecentMatches] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const [orgData, upcoming, recent] = await Promise.all([
+          getC9Organization(),
+          getUpcomingSeries('Cloud9'),
+          getRecentSeries('Cloud9', 30),
+        ]);
+
+        setOrg(orgData);
+        setUpcomingMatches(upcoming);
+        setRecentMatches(recent);
+      } catch (err) {
+        console.error('Failed to fetch data:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="loading">
+        <p>Loading Cloud9 data...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="error">
+        <h2>Error</h2>
+        <p>{error}</p>
+        <p>Check the console for more details.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="home">
+      <header className="header">
+        <h1>The Buy Phase</h1>
+        <p className="subtitle">Cloud9 Valorant Scouting Tool</p>
+      </header>
+
+      {org && (
+        <section className="org-info">
+          <h2>{org.name}</h2>
+          <p>{org.teams?.length || 0} teams in organization</p>
+        </section>
+      )}
+
+      <section className="matches-section">
+        <h2>Upcoming Matches</h2>
+        {upcomingMatches.length === 0 ? (
+          <p className="no-matches">No upcoming matches scheduled in the next 7 days</p>
+        ) : (
+          <div className="matches-list">
+            {upcomingMatches.map(match => (
+              <MatchCard key={match.id} match={match} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="matches-section">
+        <h2>Recent Matches (Last 30 Days)</h2>
+        {recentMatches.length === 0 ? (
+          <p className="no-matches">No recent matches found</p>
+        ) : (
+          <div className="matches-list">
+            {recentMatches.map(match => (
+              <MatchCard key={match.id} match={match} isRecent />
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function MatchCard({ match, isRecent = false }) {
+  const team1 = match.teams[0]?.baseInfo;
+  const team2 = match.teams[1]?.baseInfo;
+  const score1 = match.teams[0]?.scoreAdvantage || 0;
+  const score2 = match.teams[1]?.scoreAdvantage || 0;
+
+  const date = new Date(match.startTimeScheduled);
+  const dateStr = date.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+  const timeStr = date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
+  return (
+    <div className="match-card">
+      <div className="match-meta">
+        <span className="tournament">{match.tournament?.nameShortened || match.tournament?.name}</span>
+        <span className="format">{match.format?.nameShortened}</span>
+      </div>
+
+      <div className="match-teams">
+        <div className="team">
+          {team1?.logoUrl && <img src={team1.logoUrl} alt={team1.name} className="team-logo" />}
+          <span className="team-name">{team1?.name || 'TBD'}</span>
+          {isRecent && <span className="score">{score1}</span>}
+        </div>
+
+        <span className="vs">vs</span>
+
+        <div className="team">
+          {isRecent && <span className="score">{score2}</span>}
+          <span className="team-name">{team2?.name || 'TBD'}</span>
+          {team2?.logoUrl && <img src={team2.logoUrl} alt={team2.name} className="team-logo" />}
+        </div>
+      </div>
+
+      <div className="match-time">
+        <span>{dateStr}</span>
+        <span>{timeStr}</span>
+      </div>
+    </div>
+  );
+}
