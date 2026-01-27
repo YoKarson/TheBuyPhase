@@ -1,11 +1,11 @@
 import { gridQuery } from './gridClient';
 
 export async function getSeriesState(seriesId) {
+  // Start with minimal fields to test what's available
   const query = `
     query GetSeriesState($id: ID!) {
       seriesState(id: $id) {
         id
-        format
         started
         finished
         teams {
@@ -20,7 +20,6 @@ export async function getSeriesState(seriesId) {
           started
           finished
           map {
-            id
             name
           }
           teams {
@@ -31,43 +30,11 @@ export async function getSeriesState(seriesId) {
             score
             kills
             deaths
-            firstKill
             players {
               id
               name
-              character {
-                name
-              }
               kills
               deaths
-              killAssistsGiven
-              firstKill
-              money
-              loadoutValue
-            }
-          }
-          segments {
-            id
-            type
-            sequenceNumber
-            started
-            finished
-            teams {
-              id
-              name
-              side
-              won
-              kills
-              deaths
-              firstKill
-              winType
-              players {
-                id
-                name
-                kills
-                deaths
-                firstKill
-              }
             }
           }
         }
@@ -79,7 +46,7 @@ export async function getSeriesState(seriesId) {
   return data.seriesState;
 }
 
-// Compute scouting metrics from series state
+// Compute scouting metrics from series state (basic version)
 export function computeScoutingMetrics(seriesState, teamName) {
   if (!seriesState?.games) return null;
 
@@ -87,15 +54,8 @@ export function computeScoutingMetrics(seriesState, teamName) {
     teamName,
     gamesPlayed: 0,
     gamesWon: 0,
-    roundsPlayed: 0,
-    roundsWon: 0,
-    attackRoundsWon: 0,
-    attackRoundsPlayed: 0,
-    defenseRoundsWon: 0,
-    defenseRoundsPlayed: 0,
-    firstBloodRounds: 0,
-    firstBloodWins: 0,
-    firstBloodLosses: 0,
+    totalKills: 0,
+    totalDeaths: 0,
     players: {},
   };
 
@@ -109,79 +69,32 @@ export function computeScoutingMetrics(seriesState, teamName) {
 
     metrics.gamesPlayed++;
     if (team.won) metrics.gamesWon++;
+    metrics.totalKills += team.kills || 0;
+    metrics.totalDeaths += team.deaths || 0;
 
-    // Process rounds (segments)
-    for (const segment of game.segments || []) {
-      if (segment.type !== 'round' || !segment.finished) continue;
-
-      const segmentTeam = segment.teams.find(t =>
-        t.name.toLowerCase().includes(teamName.toLowerCase())
-      );
-      if (!segmentTeam) continue;
-
-      metrics.roundsPlayed++;
-      if (segmentTeam.won) metrics.roundsWon++;
-
-      // Track attack/defense
-      const isAttack = segmentTeam.side?.toLowerCase() === 'attack';
-      if (isAttack) {
-        metrics.attackRoundsPlayed++;
-        if (segmentTeam.won) metrics.attackRoundsWon++;
-      } else {
-        metrics.defenseRoundsPlayed++;
-        if (segmentTeam.won) metrics.defenseRoundsWon++;
+    // Player stats from game level
+    for (const player of team.players || []) {
+      if (!metrics.players[player.id]) {
+        metrics.players[player.id] = {
+          name: player.name,
+          kills: 0,
+          deaths: 0,
+        };
       }
-
-      // First blood analysis
-      if (segmentTeam.firstKill) {
-        metrics.firstBloodRounds++;
-        if (segmentTeam.won) {
-          metrics.firstBloodWins++;
-        } else {
-          metrics.firstBloodLosses++;
-        }
-      }
-
-      // Player stats
-      for (const player of segmentTeam.players || []) {
-        if (!metrics.players[player.id]) {
-          metrics.players[player.id] = {
-            name: player.name,
-            kills: 0,
-            deaths: 0,
-            firstKills: 0,
-            rounds: 0,
-          };
-        }
-        metrics.players[player.id].kills += player.kills || 0;
-        metrics.players[player.id].deaths += player.deaths || 0;
-        metrics.players[player.id].rounds++;
-        if (player.firstKill) {
-          metrics.players[player.id].firstKills++;
-        }
-      }
+      metrics.players[player.id].kills += player.kills || 0;
+      metrics.players[player.id].deaths += player.deaths || 0;
     }
   }
 
   // Compute derived stats
-  metrics.winRate = metrics.roundsPlayed > 0
-    ? (metrics.roundsWon / metrics.roundsPlayed * 100).toFixed(1)
-    : 0;
-  metrics.attackWinRate = metrics.attackRoundsPlayed > 0
-    ? (metrics.attackRoundsWon / metrics.attackRoundsPlayed * 100).toFixed(1)
-    : 0;
-  metrics.defenseWinRate = metrics.defenseRoundsPlayed > 0
-    ? (metrics.defenseRoundsWon / metrics.defenseRoundsPlayed * 100).toFixed(1)
-    : 0;
-  metrics.firstBloodConversion = metrics.firstBloodRounds > 0
-    ? (metrics.firstBloodWins / metrics.firstBloodRounds * 100).toFixed(1)
-    : 0;
+  metrics.kd = metrics.totalDeaths > 0
+    ? (metrics.totalKills / metrics.totalDeaths).toFixed(2)
+    : metrics.totalKills.toFixed(2);
 
   // Player stats array
   metrics.playerStats = Object.values(metrics.players).map(p => ({
     ...p,
     kd: p.deaths > 0 ? (p.kills / p.deaths).toFixed(2) : p.kills.toFixed(2),
-    firstKillRate: p.rounds > 0 ? (p.firstKills / p.rounds * 100).toFixed(1) : 0,
   })).sort((a, b) => b.kills - a.kills);
 
   return metrics;

@@ -14,10 +14,12 @@ export default function ScoutingReport({ seriesId, opponent, onBack }) {
         setError(null);
 
         const state = await getSeriesState(seriesId);
+        console.log('Series state:', state);
         setSeriesState(state);
 
         if (state && opponent) {
           const computed = computeScoutingMetrics(state, opponent);
+          console.log('Metrics:', computed);
           setMetrics(computed);
         }
       } catch (err) {
@@ -71,7 +73,7 @@ export default function ScoutingReport({ seriesId, opponent, onBack }) {
         <h1>Scouting Report</h1>
         <h2>{opponent}</h2>
         <p className="series-info">
-          Series {seriesState.id} - {seriesState.format}
+          Series {seriesState.id}
           {seriesState.finished ? ' (Finished)' : ' (In Progress)'}
         </p>
       </header>
@@ -87,79 +89,48 @@ export default function ScoutingReport({ seriesId, opponent, onBack }) {
                 sublabel="Won/Played"
               />
               <MetricCard
-                label="Round Win Rate"
-                value={`${metrics.winRate}%`}
-                sublabel={`${metrics.roundsWon}/${metrics.roundsPlayed}`}
+                label="Total Kills"
+                value={metrics.totalKills}
               />
               <MetricCard
-                label="Attack Win Rate"
-                value={`${metrics.attackWinRate}%`}
-                sublabel={`${metrics.attackRoundsWon}/${metrics.attackRoundsPlayed}`}
+                label="Total Deaths"
+                value={metrics.totalDeaths}
               />
               <MetricCard
-                label="Defense Win Rate"
-                value={`${metrics.defenseWinRate}%`}
-                sublabel={`${metrics.defenseRoundsWon}/${metrics.defenseRoundsPlayed}`}
+                label="Team K/D"
+                value={metrics.kd}
               />
             </div>
-          </section>
-
-          <section className="metrics-section">
-            <h3>First Blood Analysis</h3>
-            <div className="metrics-grid">
-              <MetricCard
-                label="First Bloods"
-                value={metrics.firstBloodRounds}
-                sublabel="Rounds with FB"
-              />
-              <MetricCard
-                label="FB Conversion"
-                value={`${metrics.firstBloodConversion}%`}
-                sublabel="Win rate after FB"
-                highlight={parseFloat(metrics.firstBloodConversion) < 70}
-              />
-              <MetricCard
-                label="FB Losses"
-                value={metrics.firstBloodLosses}
-                sublabel="Lost after getting FB"
-                highlight={metrics.firstBloodLosses > 2}
-              />
-            </div>
-            {metrics.firstBloodLosses > 0 && (
-              <div className="insight-box warning">
-                <strong>Exploit:</strong> {opponent} lost {metrics.firstBloodLosses} rounds
-                after getting first blood ({((metrics.firstBloodLosses / metrics.firstBloodRounds) * 100).toFixed(0)}% choke rate).
-                They struggle to convert advantages.
-              </div>
-            )}
           </section>
 
           <section className="metrics-section">
             <h3>Player Performance</h3>
-            <table className="player-table">
-              <thead>
-                <tr>
-                  <th>Player</th>
-                  <th>K</th>
-                  <th>D</th>
-                  <th>K/D</th>
-                  <th>First Kill %</th>
-                </tr>
-              </thead>
-              <tbody>
-                {metrics.playerStats.map(player => (
-                  <tr key={player.name}>
-                    <td className="player-name">{player.name}</td>
-                    <td>{player.kills}</td>
-                    <td>{player.deaths}</td>
-                    <td className={parseFloat(player.kd) < 1 ? 'stat-low' : 'stat-high'}>
-                      {player.kd}
-                    </td>
-                    <td>{player.firstKillRate}%</td>
+            {metrics.playerStats.length > 0 ? (
+              <table className="player-table">
+                <thead>
+                  <tr>
+                    <th>Player</th>
+                    <th>K</th>
+                    <th>D</th>
+                    <th>K/D</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {metrics.playerStats.map(player => (
+                    <tr key={player.name}>
+                      <td className="player-name">{player.name}</td>
+                      <td>{player.kills}</td>
+                      <td>{player.deaths}</td>
+                      <td className={parseFloat(player.kd) < 1 ? 'stat-low' : 'stat-high'}>
+                        {player.kd}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p>No player data available</p>
+            )}
           </section>
 
           {/* Find weak links */}
