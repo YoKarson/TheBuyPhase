@@ -7,6 +7,11 @@ export default function ScoutingReport({ seriesId, opponent, onBack }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const cleanName = (name) => {
+    if (!name) return 'Unknown';
+    return name.replace(/\s*\(\d+\)\s*$/, '').trim();
+  };
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -71,7 +76,7 @@ export default function ScoutingReport({ seriesId, opponent, onBack }) {
 
       <header className="report-header">
         <h1>Scouting Report</h1>
-        <h2>{opponent}</h2>
+        <h2>{cleanName(opponent)}</h2>
         <p className="series-info">
           Series {seriesState.id}
           {seriesState.finished ? ' (Finished)' : ' (In Progress)'}
@@ -166,7 +171,7 @@ export default function ScoutingReport({ seriesId, opponent, onBack }) {
             <div className="game-teams">
               {game.teams.map(team => (
                 <div key={team.id} className={`game-team ${team.won ? 'winner' : ''}`}>
-                  <span>{team.name}</span>
+                  <span>{cleanName(team.name)}</span>
                   <span>{team.score} rounds</span>
                 </div>
               ))}

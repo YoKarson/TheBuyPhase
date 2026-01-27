@@ -87,10 +87,15 @@ export default function Home({ onMatchClick }) {
 }
 
 function MatchCard({ match, isRecent = false, onClick }) {
-  const team1 = match.teams[0]?.baseInfo;
-  const team2 = match.teams[1]?.baseInfo;
-  const score1 = match.teams[0]?.scoreAdvantage || 0;
-  const score2 = match.teams[1]?.scoreAdvantage || 0;
+  const team1 = match.teams?.[0]?.baseInfo;
+  const team2 = match.teams?.[1]?.baseInfo;
+  const score1 = match.teams?.[0]?.scoreAdvantage ?? 0;
+  const score2 = match.teams?.[1]?.scoreAdvantage ?? 0;
+
+  const cleanName = (name) => {
+    if (!name) return 'TBD';
+    return name.replace(/\s*\(\d+\)\s*$/, '').trim();
+  };
 
   const date = new Date(match.startTimeScheduled);
   const dateStr = date.toLocaleDateString('en-US', {
@@ -113,7 +118,7 @@ function MatchCard({ match, isRecent = false, onClick }) {
       <div className="match-teams">
         <div className="team">
           {team1?.logoUrl && <img src={team1.logoUrl} alt={team1.name} className="team-logo" />}
-          <span className="team-name">{team1?.name || 'TBD'}</span>
+          <span className="team-name">{cleanName(team1?.name)}</span>
           {isRecent && <span className="score">{score1}</span>}
         </div>
 
@@ -121,7 +126,7 @@ function MatchCard({ match, isRecent = false, onClick }) {
 
         <div className="team">
           {isRecent && <span className="score">{score2}</span>}
-          <span className="team-name">{team2?.name || 'TBD'}</span>
+          <span className="team-name">{cleanName(team2?.name)}</span>
           {team2?.logoUrl && <img src={team2.logoUrl} alt={team2.name} className="team-logo" />}
         </div>
       </div>
