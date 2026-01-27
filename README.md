@@ -1,16 +1,93 @@
-# React + Vite
+# The Buy Phase
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A Valorant scouting and analytics tool built for Cloud9, providing actionable insights for match preparation without requiring spatial tracking data.
 
-Currently, two official plugins are available:
+## Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+The Buy Phase analyzes professional Valorant match data to generate scouting reports that help teams prepare for upcoming opponents. By focusing on inferable tendencies rather than coordinate-based tracking, it surfaces meaningful patterns like:
 
-## React Compiler
+- **Macro Tendencies** - Map preferences, attack/defense win rates, eco round success
+- **Player Tendencies** - First blood %, clutch rate, trade efficiency
+- **Mistake Patterns** - Situations where teams underperform (e.g., losing rounds after securing first blood)
+- **Economy Exploits** - Force buy patterns and conversion rates
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Features
 
-## Expanding the ESLint configuration
+- View Cloud9's upcoming Valorant matches
+- Browse recent match history
+- Team and player performance breakdowns
+- Pre-match scouting reports for opponents
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Tech Stack
+
+- **Frontend**: React 19 + Vite
+- **Data**: GRID Esports Data API
+- **Styling**: CSS with C9 brand colors
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- GRID API key
+
+### Installation
+
+1. Clone the repository
+   ```bash
+   git clone https://github.com/YoKarson/TheBuyPhase.git
+   cd TheBuyPhase
+   ```
+
+2. Install dependencies
+   ```bash
+   npm install
+   ```
+
+3. Create environment file
+   ```bash
+   cp .env.example .env
+   ```
+
+4. Add your GRID API key to `.env`
+   ```
+   VITE_GRID_API_KEY=your_api_key_here
+   ```
+
+5. Start the development server
+   ```bash
+   npm run dev
+   ```
+
+6. Open http://localhost:5173 in your browser
+
+## Project Structure
+
+```
+src/
+├── api/
+│   ├── gridClient.js     # GraphQL client with authentication
+│   └── centralData.js    # Team, series, and tournament queries
+├── pages/
+│   └── Home.jsx          # Main dashboard
+├── App.jsx
+└── App.css
+```
+
+## API Endpoints
+
+The app integrates with three GRID API endpoints:
+
+| Endpoint | Purpose |
+|----------|---------|
+| `central-data/graphql` | Teams, players, tournaments, schedules |
+| `live-data-feed/series-state/graphql` | Round-by-round game state |
+| `statistics-feed/graphql` | Aggregated performance stats |
+
+## Contributing
+
+This project was built for the Cloud9 hackathon. Contributions welcome.
+
+## License
+
+See [LICENSE](LICENSE) for details.
