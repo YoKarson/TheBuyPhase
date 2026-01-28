@@ -429,3 +429,208 @@ body {
 .game-team.winner span:last-child {
   color: #50e080;
 }
+
+/* Teams Grid */
+.teams-section {
+  margin-bottom: 2rem;
+}
+
+.teams-section h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #ffffff;
+}
+
+.section-desc {
+  color: #8888a0;
+  margin-bottom: 1.5rem;
+}
+
+.teams-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
+.team-card {
+  background: linear-gradient(135deg, #1a1a25 0%, #1e1e30 100%);
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 1px solid #3a3a4a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.team-card:hover {
+  border-color: #00aeef;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 174, 239, 0.2);
+}
+
+.team-card-logo {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.team-card-logo.placeholder {
+  background: #252535;
+  border-radius: 8px;
+}
+
+.team-card-name {
+  font-weight: 600;
+  color: #ffffff;
+  font-size: 0.9rem;
+}
+
+/* Report Team Header */
+.report-team-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.report-team-logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+}
+
+/* Loading State */
+.loading-state {
+  text-align: center;
+  padding: 3rem;
+}
+
+.loading-state p {
+  color: #b0b0c0;
+  font-size: 1.1rem;
+}
+
+.loading-sub {
+  color: #6a6a80;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+/* Map Pool Grid */
+.map-pool-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.map-card {
+  background: linear-gradient(135deg, #1a1a25 0%, #1e1e30 100%);
+  border-radius: 12px;
+  padding: 1rem;
+  border: 2px solid #3a3a4a;
+  text-align: center;
+}
+
+.map-card.map-strong {
+  border-color: #50e080;
+  background: linear-gradient(135deg, #102015 0%, #153020 100%);
+}
+
+.map-card.map-weak {
+  border-color: #ff7070;
+  background: linear-gradient(135deg, #251a1a 0%, #302020 100%);
+}
+
+.map-card .map-name {
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.map-card .map-record {
+  color: #b0b0c0;
+  font-size: 0.85rem;
+}
+
+.map-card .map-winrate {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #00aeef;
+  margin: 0.25rem 0;
+}
+
+.map-card.map-strong .map-winrate {
+  color: #50e080;
+}
+
+.map-card.map-weak .map-winrate {
+  color: #ff7070;
+}
+
+.map-card .map-rounds {
+  color: #8888a0;
+  font-size: 0.8rem;
+}
+
+.map-insights {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+/* Match Results */
+.match-result {
+  background: linear-gradient(135deg, #1a1a25 0%, #1e1e30 100%);
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid #3a3a4a;
+  margin-bottom: 0.5rem;
+}
+
+.match-result.won {
+  border-left: 4px solid #50e080;
+}
+
+.match-result.lost {
+  border-left: 4px solid #ff7070;
+}
+
+.match-result-teams {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.match-result-team {
+  font-weight: 600;
+  color: #00aeef;
+  flex: 1;
+}
+
+.match-result-score {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: #ffffff;
+  padding: 0 1rem;
+}
+
+.match-result-opponent {
+  color: #b0b0c0;
+  flex: 1;
+  text-align: right;
+}
+
+.match-result-meta {
+  color: #6a6a80;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+}

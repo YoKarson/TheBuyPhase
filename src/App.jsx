@@ -5,41 +5,28 @@ import ScoutingReport from './pages/ScoutingReport'
 
 function App() {
   const [view, setView] = useState('home')
-  const [selectedMatch, setSelectedMatch] = useState(null)
+  const [selectedTeam, setSelectedTeam] = useState(null)
 
-  const handleMatchClick = (match) => {
-    // Find the opponent (non-C9 team)
-    const opponent = match.teams.find(t =>
-      !t.baseInfo?.name?.toLowerCase().includes('cloud9')
-    );
-    setSelectedMatch({
-      seriesId: match.id,
-      opponent: opponent?.baseInfo?.name || 'Unknown',
-      opponentTeamId: opponent?.baseInfo?.id,
-      tournamentId: match.tournament?.id,
-      match,
-    });
+  const handleTeamSelect = (team) => {
+    setSelectedTeam(team);
     setView('scouting');
   };
 
   const handleBack = () => {
     setView('home');
-    setSelectedMatch(null);
+    setSelectedTeam(null);
   };
 
-  if (view === 'scouting' && selectedMatch) {
+  if (view === 'scouting' && selectedTeam) {
     return (
       <ScoutingReport
-        seriesId={selectedMatch.seriesId}
-        opponent={selectedMatch.opponent}
-        opponentTeamId={selectedMatch.opponentTeamId}
-        tournamentId={selectedMatch.tournamentId}
+        team={selectedTeam}
         onBack={handleBack}
       />
     );
   }
 
-  return <Home onMatchClick={handleMatchClick} />
+  return <Home onTeamSelect={handleTeamSelect} />
 }
 
 export default App
