@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getCurrentTournamentTeams } from '../api/centralData';
+import { getCached, setCache } from '../api/cache';
 
 export default function Home({ onTeamSelect }) {
   const [tournament, setTournament] = useState(null);
@@ -9,12 +10,28 @@ export default function Home({ onTeamSelect }) {
 
   useEffect(() => {
     async function fetchData() {
+      // Check cache first
+      const cacheKey = 'tournament_teams';
+      const cached = getCached(cacheKey);
+
+      if (cached) {
+        console.log('Loaded teams from cache');
+        setTournament(cached.tournament);
+        setTeams(cached.teams);
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
         const data = await getCurrentTournamentTeams();
         setTournament(data.tournament);
         setTeams(data.teams);
+
+        // Save to cache
+        setCache(cacheKey, data);
+        console.log('Cached tournament teams');
       } catch (err) {
         console.error('Failed to fetch teams:', err);
         setError(err.message);

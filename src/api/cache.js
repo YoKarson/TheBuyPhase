@@ -42,7 +42,13 @@ export function clearCache() {
         localStorage.removeItem(key);
       }
     }
+    console.log('Cache cleared');
   } catch {
     // Ignore errors
   }
+}
+
+// Expose to window for easy debugging
+if (typeof window !== 'undefined') {
+  window.clearScoutingCache = clearCache;
 }

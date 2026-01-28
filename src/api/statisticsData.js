@@ -153,9 +153,15 @@ export async function getSeriesMapData(seriesId, teamId) {
 export async function aggregateMapPool(seriesList, teamId) {
   const mapStats = new Map();
 
-  // Fetch map data for each series (with rate limiting)
-  for (const series of seriesList) {
+  // Fetch map data for each series with delays to avoid rate limiting
+  for (let i = 0; i < seriesList.length; i++) {
+    const series = seriesList[i];
     try {
+      // Add delay between requests (except first one)
+      if (i > 0) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
       const mapData = await getSeriesMapData(series.id, teamId);
 
       for (const game of mapData) {

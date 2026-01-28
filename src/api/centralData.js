@@ -95,12 +95,22 @@ export async function getCurrentTournamentTeams() {
   };
 }
 
+// Helper function for delay
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 // Get ALL series a team played across all 2024 tournaments
 export async function getTeamAllSeries(teamId) {
   const allSeries = [];
 
-  // Query each tournament for this team's series
-  for (const tournamentId of VALORANT_2024_TOURNAMENT_IDS) {
+  // Query each tournament for this team's series (with delays)
+  for (let i = 0; i < VALORANT_2024_TOURNAMENT_IDS.length; i++) {
+    const tournamentId = VALORANT_2024_TOURNAMENT_IDS[i];
+
+    // Add delay between requests (except first one)
+    if (i > 0) {
+      await delay(400);
+    }
+
     try {
       const query = `
         query GetTeamSeries($tournamentId: ID!) {

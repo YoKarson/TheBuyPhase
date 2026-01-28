@@ -60,17 +60,29 @@ export default function ScoutingReport({ team, onBack }) {
           setLoadingStatus('Loading player data...');
           const players = await getTeamPlayers(allSeries[0].id, team.id);
 
-          // Fetch player stats
-          const playerStatsPromises = players.map(async (player) => {
-            try {
-              const pStats = await getPlayerStatistics(player.id);
-              return { ...player, stats: pStats };
-            } catch {
-              return { ...player, stats: null };
-            }
-          });
+          // Pause before fetching player stats to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 1000));
 
-          allPlayerStats = (await Promise.all(playerStatsPromises)).filter(p => p.stats);
+          // Fetch player stats sequentially with delay to avoid rate limiting
+          for (const player of players) {
+            setLoadingStatus(`Loading stats for ${player.name}...`);
+            try {
+              // Check player cache first
+              const playerCacheKey = `player_${player.id}`;
+              let pStats = getCached(playerCacheKey);
+
+              if (!pStats) {
+                // Longer delay between requests to avoid rate limiting
+                await new Promise(resolve => setTimeout(resolve, 750));
+                pStats = await getPlayerStatistics(player.id);
+                setCache(playerCacheKey, pStats);
+              }
+
+              allPlayerStats.push({ ...player, stats: pStats });
+            } catch (err) {
+              console.warn(`Failed to get stats for ${player.name}:`, err.message);
+            }
+          }
           setPlayerStats(allPlayerStats);
         }
 
