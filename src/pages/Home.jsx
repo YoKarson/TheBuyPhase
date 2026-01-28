@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { getTournamentTeams } from '../api/centralData';
+import { getCurrentTournamentTeams } from '../api/centralData';
 
 export default function Home({ onTeamSelect }) {
+  const [tournament, setTournament] = useState(null);
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -11,15 +12,15 @@ export default function Home({ onTeamSelect }) {
       try {
         setLoading(true);
         setError(null);
-        const teamsData = await getTournamentTeams();
-        setTeams(teamsData);
+        const data = await getCurrentTournamentTeams();
+        setTournament(data.tournament);
+        setTeams(data.teams);
       } catch (err) {
         console.error('Failed to fetch teams:', err);
         setError(err.message);
       } finally {
         setLoading(false);
       }
-
     }
 
     fetchData();
@@ -51,7 +52,12 @@ export default function Home({ onTeamSelect }) {
 
       <section className="teams-section">
         <h2>Select a Team to Scout</h2>
-        <p className="section-desc">VCT Americas Kickoff 2024</p>
+        {tournament && (
+          <p className="section-desc">
+            Teams from: {tournament.name}
+          </p>
+        )}
+        <p className="section-note">Scouting data aggregated from all VCT Americas 2024 tournaments</p>
         <div className="teams-grid">
           {teams.map(team => (
             <div

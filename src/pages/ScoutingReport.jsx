@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getTeamSeries, TOURNAMENT_ID } from '../api/centralData';
+import { getTeamAllSeries } from '../api/centralData';
 import { getTeamStatistics, getPlayerStatistics, getTeamPlayers, aggregateMapPool } from '../api/statisticsData';
 
 export default function ScoutingReport({ team, onBack }) {
@@ -9,6 +9,7 @@ export default function ScoutingReport({ team, onBack }) {
   const [mapPool, setMapPool] = useState([]);
   const [playerStats, setPlayerStats] = useState([]);
   const [recentMatches, setRecentMatches] = useState([]);
+  const [loadingStatus, setLoadingStatus] = useState('');
 
   useEffect(() => {
     async function fetchData() {
@@ -22,26 +23,30 @@ export default function ScoutingReport({ team, onBack }) {
         setLoading(true);
         setError(null);
 
-        // Fetch team's series in the tournament
-        const series = await getTeamSeries(team.id);
-        setRecentMatches(series);
-
-        // Fetch team statistics
-        const stats = await getTeamStatistics(team.id, TOURNAMENT_ID);
+        // Step 1: Get team stats from all 2024 tournaments
+        setLoadingStatus('Fetching team statistics...');
+        const stats = await getTeamStatistics(team.id);
         setTeamStats(stats);
 
-        // Aggregate map pool data from all series
-        if (series.length > 0) {
-          const mapData = await aggregateMapPool(series, team.id);
+        // Step 2: Get all series this team played in 2024
+        setLoadingStatus('Finding all 2024 matches...');
+        const allSeries = await getTeamAllSeries(team.id);
+        setRecentMatches(allSeries);
+
+        if (allSeries.length > 0) {
+          // Step 3: Aggregate map pool from all series
+          setLoadingStatus(`Analyzing map pool (${allSeries.length} series)...`);
+          const mapData = await aggregateMapPool(allSeries, team.id);
           setMapPool(mapData);
 
-          // Get players from first series
-          const players = await getTeamPlayers(series[0].id, team.id);
+          // Step 4: Get players from most recent series
+          setLoadingStatus('Loading player data...');
+          const players = await getTeamPlayers(allSeries[0].id, team.id);
 
           // Fetch player stats
           const playerStatsPromises = players.map(async (player) => {
             try {
-              const pStats = await getPlayerStatistics(player.id, TOURNAMENT_ID);
+              const pStats = await getPlayerStatistics(player.id);
               return { ...player, stats: pStats };
             } catch {
               return { ...player, stats: null };
@@ -51,6 +56,8 @@ export default function ScoutingReport({ team, onBack }) {
           const allPlayerStats = await Promise.all(playerStatsPromises);
           setPlayerStats(allPlayerStats.filter(p => p.stats));
         }
+
+        setLoadingStatus('');
       } catch (err) {
         console.error('Failed to fetch scouting data:', err);
         setError(err.message);
@@ -67,8 +74,8 @@ export default function ScoutingReport({ team, onBack }) {
       <div className="scouting-report">
         <button className="back-btn" onClick={onBack}>Back</button>
         <div className="loading-state">
-          <p>Loading scouting data for {team?.name}...</p>
-          <p className="loading-sub">Analyzing maps and player performance</p>
+          <p>Loading scouting data for {cleanName(team?.name)}...</p>
+          <p className="loading-sub">{loadingStatus}</p>
         </div>
       </div>
     );
@@ -87,6 +94,7 @@ export default function ScoutingReport({ team, onBack }) {
   }
 
   // Extract team stats
+  const seriesPlayed = teamStats?.series?.count || 0;
   const gamesPlayed = teamStats?.game?.count || 0;
   const winsData = teamStats?.game?.wins?.find(w => w.value === true) || {};
   const gamesWon = winsData.count || 0;
@@ -108,8 +116,8 @@ export default function ScoutingReport({ team, onBack }) {
   }).sort((a, b) => b.kills - a.kills);
 
   // Find best and worst maps
-  const bestMap = mapPool.find(m => m.played > 0 && Number(m.winRate) >= 50);
-  const worstMap = [...mapPool].reverse().find(m => m.played > 0 && Number(m.winRate) < 50);
+  const bestMap = mapPool.find(m => m.played >= 2 && Number(m.winRate) >= 60);
+  const worstMap = [...mapPool].reverse().find(m => m.played >= 2 && Number(m.winRate) <= 40);
 
   return (
     <div className="scouting-report">
@@ -123,13 +131,14 @@ export default function ScoutingReport({ team, onBack }) {
             <h2>{cleanName(team.name)}</h2>
           </div>
         </div>
-        <p className="series-info">VCT Americas Kickoff 2024</p>
+        <p className="series-info">Data from all VCT Americas 2024 tournaments ({seriesPlayed} series analyzed)</p>
       </header>
 
       {/* Team Overview */}
       <section className="metrics-section">
-        <h3>Team Overview</h3>
+        <h3>Team Overview (2024 Season)</h3>
         <div className="metrics-grid">
+          <MetricCard label="Series Played" value={seriesPlayed} />
           <MetricCard label="Maps Played" value={gamesPlayed} />
           <MetricCard
             label="Map Record"
@@ -137,7 +146,6 @@ export default function ScoutingReport({ team, onBack }) {
             sublabel={`${winPercentage.toFixed(0)}% win rate`}
           />
           <MetricCard label="Team K/D" value={teamKD} />
-          <MetricCard label="Total Kills" value={totalKills} />
         </div>
       </section>
 
@@ -148,9 +156,9 @@ export default function ScoutingReport({ team, onBack }) {
           <>
             <div className="map-pool-grid">
               {mapPool.map(map => (
-                <div key={map.map} className={`map-card ${getMapClass(map.winRate)}`}>
+                <div key={map.map} className={`map-card ${getMapClass(map.winRate, map.played)}`}>
                   <div className="map-name">{map.map}</div>
-                  <div className="map-record">{map.wins}W - {map.losses}L</div>
+                  <div className="map-record">{map.wins}W - {map.losses}L ({map.played} played)</div>
                   <div className="map-winrate">{map.winRate}%</div>
                   <div className="map-rounds">Round Diff: {map.roundDiff > 0 ? '+' : ''}{map.roundDiff}</div>
                 </div>
@@ -160,12 +168,12 @@ export default function ScoutingReport({ team, onBack }) {
               <div className="map-insights">
                 {bestMap && (
                   <div className="insight-box">
-                    <p><strong>Best Map:</strong> {bestMap.map} ({bestMap.winRate}% WR) - Consider banning this</p>
+                    <p><strong>Strong Map:</strong> {bestMap.map} ({bestMap.winRate}% WR over {bestMap.played} games) - Consider banning</p>
                   </div>
                 )}
                 {worstMap && (
                   <div className="insight-box warning">
-                    <p><strong>Weak Map:</strong> {worstMap.map} ({worstMap.winRate}% WR) - Target this map</p>
+                    <p><strong>Weak Map:</strong> {worstMap.map} ({worstMap.winRate}% WR over {worstMap.played} games) - Target this map</p>
                   </div>
                 )}
               </div>
@@ -178,16 +186,16 @@ export default function ScoutingReport({ team, onBack }) {
 
       {/* Player Performance */}
       <section className="metrics-section">
-        <h3>Player Performance</h3>
+        <h3>Player Performance (2024 Season)</h3>
         {processedPlayers.length > 0 ? (
           <table className="player-table">
             <thead>
               <tr>
                 <th>Player</th>
-                <th>K</th>
-                <th>D</th>
+                <th>Kills</th>
+                <th>Deaths</th>
                 <th>K/D</th>
-                <th>Avg K</th>
+                <th>Avg K/Series</th>
               </tr>
             </thead>
             <tbody>
@@ -208,7 +216,6 @@ export default function ScoutingReport({ team, onBack }) {
           <p>No player data available</p>
         )}
 
-        {/* Weak link detection */}
         {processedPlayers.some(p => parseFloat(p.kd) < 0.9) && (
           <div className="insight-box warning">
             <p><strong>Targetable Players:</strong></p>
@@ -221,32 +228,6 @@ export default function ScoutingReport({ team, onBack }) {
         )}
       </section>
 
-      {/* Recent Matches */}
-      <section className="metrics-section">
-        <h3>Recent Matches</h3>
-        <div className="matches-list">
-          {recentMatches.map(match => {
-            const teamData = match.teams.find(t => t.baseInfo?.id === team.id);
-            const opponent = match.teams.find(t => t.baseInfo?.id !== team.id);
-            const won = teamData?.scoreAdvantage > opponent?.scoreAdvantage;
-
-            return (
-              <div key={match.id} className={`match-result ${won ? 'won' : 'lost'}`}>
-                <div className="match-result-teams">
-                  <span className="match-result-team">{cleanName(team.name)}</span>
-                  <span className="match-result-score">
-                    {teamData?.scoreAdvantage || 0} - {opponent?.scoreAdvantage || 0}
-                  </span>
-                  <span className="match-result-opponent">{cleanName(opponent?.baseInfo?.name)}</span>
-                </div>
-                <div className="match-result-meta">
-                  {new Date(match.startTimeScheduled).toLocaleDateString()}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
     </div>
   );
 }
@@ -266,9 +247,10 @@ function cleanName(name) {
   return name.replace(/\s*\(\d+\)\s*$/, '').trim();
 }
 
-function getMapClass(winRate) {
+function getMapClass(winRate, played) {
+  if (played < 2) return 'map-neutral'; // Not enough data
   const rate = Number(winRate);
   if (rate >= 60) return 'map-strong';
-  if (rate >= 40) return 'map-neutral';
-  return 'map-weak';
+  if (rate <= 40) return 'map-weak';
+  return 'map-neutral';
 }

@@ -443,6 +443,12 @@ body {
 
 .section-desc {
   color: #8888a0;
+  margin-bottom: 0.5rem;
+}
+
+.section-note {
+  color: #6a6a80;
+  font-size: 0.85rem;
   margin-bottom: 1.5rem;
 }
 
