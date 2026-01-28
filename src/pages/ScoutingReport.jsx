@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getTeamAllSeries } from '../api/centralData';
 import { getTeamStatistics, getPlayerStatistics, getTeamPlayers, aggregateMapPool } from '../api/statisticsData';
+import { getCached, setCache } from '../api/cache';
 
 export default function ScoutingReport({ team, onBack }) {
   const [loading, setLoading] = useState(true);
@@ -8,13 +9,27 @@ export default function ScoutingReport({ team, onBack }) {
   const [teamStats, setTeamStats] = useState(null);
   const [mapPool, setMapPool] = useState([]);
   const [playerStats, setPlayerStats] = useState([]);
-  const [recentMatches, setRecentMatches] = useState([]);
   const [loadingStatus, setLoadingStatus] = useState('');
+  const [fromCache, setFromCache] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
       if (!team?.id) {
         setError('No team selected');
+        setLoading(false);
+        return;
+      }
+
+      // Check cache first
+      const cacheKey = `team_${team.id}`;
+      const cached = getCached(cacheKey);
+
+      if (cached) {
+        console.log(`Loaded ${team.name} from cache`);
+        setTeamStats(cached.teamStats);
+        setMapPool(cached.mapPool);
+        setPlayerStats(cached.playerStats);
+        setFromCache(true);
         setLoading(false);
         return;
       }
@@ -31,12 +46,14 @@ export default function ScoutingReport({ team, onBack }) {
         // Step 2: Get all series this team played in 2024
         setLoadingStatus('Finding all 2024 matches...');
         const allSeries = await getTeamAllSeries(team.id);
-        setRecentMatches(allSeries);
+
+        let mapData = [];
+        let allPlayerStats = [];
 
         if (allSeries.length > 0) {
           // Step 3: Aggregate map pool from all series
           setLoadingStatus(`Analyzing map pool (${allSeries.length} series)...`);
-          const mapData = await aggregateMapPool(allSeries, team.id);
+          mapData = await aggregateMapPool(allSeries, team.id);
           setMapPool(mapData);
 
           // Step 4: Get players from most recent series
@@ -53,9 +70,17 @@ export default function ScoutingReport({ team, onBack }) {
             }
           });
 
-          const allPlayerStats = await Promise.all(playerStatsPromises);
-          setPlayerStats(allPlayerStats.filter(p => p.stats));
+          allPlayerStats = (await Promise.all(playerStatsPromises)).filter(p => p.stats);
+          setPlayerStats(allPlayerStats);
         }
+
+        // Save to cache
+        setCache(cacheKey, {
+          teamStats: stats,
+          mapPool: mapData,
+          playerStats: allPlayerStats,
+        });
+        console.log(`Cached ${team.name} scouting data`);
 
         setLoadingStatus('');
       } catch (err) {
@@ -131,7 +156,10 @@ export default function ScoutingReport({ team, onBack }) {
             <h2>{cleanName(team.name)}</h2>
           </div>
         </div>
-        <p className="series-info">Data from all VCT Americas 2024 tournaments ({seriesPlayed} series analyzed)</p>
+        <p className="series-info">
+          Data from all VCT Americas 2024 tournaments ({seriesPlayed} series analyzed)
+          {fromCache && <span className="cache-badge">Cached</span>}
+        </p>
       </header>
 
       {/* Team Overview */}

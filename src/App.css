@@ -640,3 +640,16 @@ body {
   font-size: 0.8rem;
   margin-top: 0.5rem;
 }
+
+/* Cache Badge */
+.cache-badge {
+  display: inline-block;
+  margin-left: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  background: #1a3a2a;
+  border: 1px solid #50e080;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  color: #50e080;
+  text-transform: uppercase;
+}
