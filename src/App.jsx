@@ -15,6 +15,8 @@ function App() {
     setSelectedMatch({
       seriesId: match.id,
       opponent: opponent?.baseInfo?.name || 'Unknown',
+      opponentTeamId: opponent?.baseInfo?.id,
+      tournamentId: match.tournament?.id,
       match,
     });
     setView('scouting');
@@ -30,6 +32,8 @@ function App() {
       <ScoutingReport
         seriesId={selectedMatch.seriesId}
         opponent={selectedMatch.opponent}
+        opponentTeamId={selectedMatch.opponentTeamId}
+        tournamentId={selectedMatch.tournamentId}
         onBack={handleBack}
       />
     );

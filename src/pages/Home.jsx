@@ -118,7 +118,7 @@ function MatchCard({ match, isRecent = false, onClick }) {
       <div className="match-teams">
         <div className="team">
           {team1?.logoUrl && <img src={team1.logoUrl} alt={team1.name} className="team-logo" />}
-          <span className="team-name">(team1?.name)</span>
+          <span className="team-name">{cleanName(team1?.name)}</span>
           {isRecent && <span className="score">{score1}</span>}
         </div>
 

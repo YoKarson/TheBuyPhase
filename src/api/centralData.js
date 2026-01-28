@@ -70,7 +70,5 @@ export async function getC9Matches() {
     series.teams.some(t => t.baseInfo?.name?.toLowerCase().includes('cloud9'))
   );
 
-  console.log('C9 matches found:', c9Matches.length);
-
   return c9Matches;
 }
