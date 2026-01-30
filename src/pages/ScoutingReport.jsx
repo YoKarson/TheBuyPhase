@@ -57,6 +57,7 @@ export default function ScoutingReport({ team, onBack }) {
 
         let mapData = [];
         let rounds = null;
+        let agents = null;
         let allPlayerStats = [];
 
         if (allSeries.length > 0) {
@@ -72,7 +73,7 @@ export default function ScoutingReport({ team, onBack }) {
           rounds = analyzeRounds(allGameData);
           setRoundAnalysis(rounds);
 
-          const agents = analyzeAgents(allGameData);
+          agents = analyzeAgents(allGameData);
           setAgentData(agents);
 
           // Step 4: Get players from most recent series
