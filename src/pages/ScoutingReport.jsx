@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getTeamAllSeries } from '../api/centralData';
-import { getTeamStatistics, getPlayerStatistics, getTeamPlayers, fetchAllSeriesData, aggregateMapPool, analyzeRounds } from '../api/statisticsData';
+import { getTeamStatistics, getPlayerStatistics, getTeamPlayers, fetchAllSeriesData, aggregateMapPool, analyzeRounds, analyzeAgents } from '../api/statisticsData';
 import { getCached, setCache } from '../api/cache';
 
 export default function ScoutingReport({ team, onBack }) {
@@ -9,6 +9,7 @@ export default function ScoutingReport({ team, onBack }) {
   const [teamStats, setTeamStats] = useState(null);
   const [mapPool, setMapPool] = useState([]);
   const [roundAnalysis, setRoundAnalysis] = useState(null);
+  const [agentData, setAgentData] = useState(null);
   const [playerStats, setPlayerStats] = useState([]);
   const [loadingStatus, setLoadingStatus] = useState('');
   const [fromCache, setFromCache] = useState(false);
@@ -32,6 +33,7 @@ export default function ScoutingReport({ team, onBack }) {
         setTeamStats(cached.teamStats);
         setMapPool(cached.mapPool);
         setRoundAnalysis(cached.roundAnalysis);
+        setAgentData(cached.agentData);
         setPlayerStats(cached.playerStats);
         setFromCache(true);
         setLoading(false);
@@ -69,6 +71,9 @@ export default function ScoutingReport({ team, onBack }) {
 
           rounds = analyzeRounds(allGameData);
           setRoundAnalysis(rounds);
+
+          const agents = analyzeAgents(allGameData);
+          setAgentData(agents);
 
           // Step 4: Get players from most recent series
           setLoadingStatus('Loading player data...');
@@ -110,6 +115,7 @@ export default function ScoutingReport({ team, onBack }) {
           teamStats: stats,
           mapPool: mapData,
           roundAnalysis: rounds,
+          agentData: agents,
           playerStats: allPlayerStats,
         });
         console.log(`Cached ${team.name} scouting data`);
@@ -302,6 +308,59 @@ export default function ScoutingReport({ team, onBack }) {
           <p>No map data available</p>
         )}
       </section>
+
+      {/* Agent Compositions */}
+      {agentData && (
+        <section className="metrics-section">
+          <h3>Compositions & Agent Pools</h3>
+          {agentData.compositions.length > 0 && (
+            <>
+              <h4>Team Compositions</h4>
+              <table className="player-table">
+                <thead>
+                  <tr>
+                    <th>Composition</th>
+                    <th>Played</th>
+                    <th>Win Rate</th>
+                    <th>Maps</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {agentData.compositions.map(comp => (
+                    <tr key={comp.agents}>
+                      <td className="comp-agents">{comp.agents}</td>
+                      <td>{comp.count}</td>
+                      <td className={Number(comp.winRate) >= 50 ? 'stat-high' : 'stat-low'}>
+                        {comp.winRate}%
+                      </td>
+                      <td>{Object.entries(comp.maps).map(([m, c]) => `${m} (${c})`).join(', ')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
+          {agentData.playerAgents.length > 0 && (
+            <>
+              <h4>Player Agent Pools</h4>
+              <div className="agent-pools">
+                {agentData.playerAgents.map(p => (
+                  <div key={p.name} className="agent-pool-card">
+                    <div className="agent-pool-name">{p.name}</div>
+                    <div className="agent-pool-list">
+                      {p.agents.map(a => (
+                        <span key={a.agent} className="agent-tag">
+                          {a.agent} ({a.count})
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </section>
+      )}
 
       {/* Player Performance */}
       <section className="metrics-section">

@@ -641,6 +641,54 @@ body {
   margin-top: 0.5rem;
 }
 
+/* Agent Pools */
+.metrics-section h4 {
+  color: #8888a0;
+  font-size: 0.85rem;
+  margin: 1.25rem 0 0.75rem 0;
+}
+
+.comp-agents {
+  text-transform: capitalize;
+  font-size: 0.85rem;
+}
+
+.agent-pools {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.agent-pool-card {
+  background: linear-gradient(135deg, #1a1a25 0%, #1e1e30 100%);
+  border-radius: 10px;
+  padding: 1rem;
+  border: 1px solid #3a3a4a;
+}
+
+.agent-pool-name {
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+
+.agent-pool-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.agent-tag {
+  display: inline-block;
+  background: #252535;
+  border: 1px solid #4a4a5a;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: #00aeef;
+  text-transform: capitalize;
+}
+
 /* Cache Badge */
 .cache-badge {
   display: inline-block;

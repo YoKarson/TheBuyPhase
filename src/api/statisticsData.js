@@ -231,6 +231,68 @@ export function analyzeRounds(allGameData) {
   return analysis;
 }
 
+// Analyze agent compositions and player agent pools
+export function analyzeAgents(allGameData) {
+  // Track compositions per map: "jett,omen,killjoy,sova,fade" -> { count, wins, maps }
+  const compositions = new Map();
+  // Track per-player agent usage
+  const playerAgents = new Map();
+
+  for (const game of allGameData) {
+    // Build comp string (sorted agent names for deduplication)
+    const compAgents = game.agents.map(a => a.agent).sort();
+    const compKey = compAgents.join(', ');
+
+    if (!compositions.has(compKey)) {
+      compositions.set(compKey, { count: 0, wins: 0, maps: {} });
+    }
+    const comp = compositions.get(compKey);
+    comp.count++;
+    if (game.won) comp.wins++;
+    comp.maps[game.map] = (comp.maps[game.map] || 0) + 1;
+
+    // Track per-player agent usage
+    for (const p of game.agents) {
+      if (!playerAgents.has(p.name)) {
+        playerAgents.set(p.name, new Map());
+      }
+      const agentMap = playerAgents.get(p.name);
+      if (!agentMap.has(p.agent)) {
+        agentMap.set(p.agent, { count: 0, wins: 0 });
+      }
+      const agentStat = agentMap.get(p.agent);
+      agentStat.count++;
+      if (game.won) agentStat.wins++;
+    }
+  }
+
+  // Convert compositions to sorted array
+  const compArray = Array.from(compositions.entries())
+    .map(([agents, data]) => ({
+      agents,
+      count: data.count,
+      wins: data.wins,
+      winRate: data.count > 0 ? (data.wins / data.count * 100).toFixed(0) : 0,
+      maps: data.maps,
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  // Convert player agents to sorted array
+  const playerArray = Array.from(playerAgents.entries())
+    .map(([name, agentMap]) => ({
+      name,
+      agents: Array.from(agentMap.entries())
+        .map(([agent, data]) => ({
+          agent,
+          count: data.count,
+          wins: data.wins,
+        }))
+        .sort((a, b) => b.count - a.count),
+    }));
+
+  return { compositions: compArray, playerAgents: playerArray };
+}
+
 // Fetch detailed data for all series (returns raw game data for further analysis)
 export async function fetchAllSeriesData(seriesList, teamId) {
   const allGameData = [];
