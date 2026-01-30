@@ -202,6 +202,16 @@ export default function ScoutingReport({ team, onBack }) {
         </p>
       </header>
 
+      {/* How to Win - Auto-generated Insights */}
+      {roundAnalysis && (
+        <section className="metrics-section how-to-win">
+          <h3>How to Beat {cleanName(team.name)}</h3>
+          <div className="how-to-win-list">
+            {generateInsights(team, roundAnalysis, mapPool, processedPlayers, agentData)}
+          </div>
+        </section>
+      )}
+
       {/* Team Overview */}
       <section className="metrics-section">
         <h3>Team Overview (Stage 1)</h3>
@@ -418,6 +428,107 @@ function MetricCard({ label, value, sublabel }) {
       {sublabel && <div className="metric-sublabel">{sublabel}</div>}
     </div>
   );
+}
+
+function generateInsights(team, roundAnalysis, mapPool, players, agentData) {
+  const insights = [];
+  const teamName = cleanName(team.name);
+
+  // 1. Side weakness
+  if (roundAnalysis.attack.total > 0 && roundAnalysis.defense.total > 0) {
+    const atkRate = roundAnalysis.attack.wins / roundAnalysis.attack.total * 100;
+    const defRate = roundAnalysis.defense.wins / roundAnalysis.defense.total * 100;
+    if (Math.abs(atkRate - defRate) > 8) {
+      const weak = atkRate < defRate ? 'attack' : 'defense';
+      const weakRate = Math.min(atkRate, defRate).toFixed(0);
+      insights.push(
+        <div key="side" className="insight-bullet">
+          <span className="insight-icon">&#9876;</span>
+          <p>{teamName} is weaker on <strong>{weak}</strong> ({weakRate}% round win rate). Force them to play {weak} side as much as possible.</p>
+        </div>
+      );
+    }
+  }
+
+  // 2. Pistol round vulnerability
+  const totalPistol = roundAnalysis.pistol.attack.total + roundAnalysis.pistol.defense.total;
+  const totalPistolWins = roundAnalysis.pistol.attack.wins + roundAnalysis.pistol.defense.wins;
+  if (totalPistol >= 2) {
+    const pistolRate = (totalPistolWins / totalPistol * 100).toFixed(0);
+    if (pistolRate <= 50) {
+      insights.push(
+        <div key="pistol" className="insight-bullet">
+          <span className="insight-icon">&#9733;</span>
+          <p>Pistol rounds are exploitable — {teamName} only wins <strong>{pistolRate}%</strong> ({totalPistolWins}/{totalPistol}). Prioritize pistol round execution for early-half economy advantage.</p>
+        </div>
+      );
+    }
+  }
+
+  // 3. Weak map to target
+  const weakMaps = mapPool.filter(m => m.played >= 2 && Number(m.winRate) <= 40);
+  if (weakMaps.length > 0) {
+    const worst = weakMaps[weakMaps.length - 1];
+    insights.push(
+      <div key="map" className="insight-bullet">
+        <span className="insight-icon">&#9881;</span>
+        <p>Target <strong>{worst.map}</strong> in map veto — {teamName} has a {worst.winRate}% win rate ({worst.wins}W-{worst.losses}L) with a round differential of {worst.roundDiff}.</p>
+      </div>
+    );
+  }
+
+  // 4. Strong map to ban
+  const strongMaps = mapPool.filter(m => m.played >= 2 && Number(m.winRate) >= 60);
+  if (strongMaps.length > 0) {
+    const best = strongMaps[0];
+    insights.push(
+      <div key="ban" className="insight-bullet">
+        <span className="insight-icon">&#128683;</span>
+        <p>Consider banning <strong>{best.map}</strong> — {teamName} has a {best.winRate}% win rate across {best.played} games.</p>
+      </div>
+    );
+  }
+
+  // 5. Targetable player
+  const weakPlayers = players.filter(p => parseFloat(p.kd) < 0.9);
+  if (weakPlayers.length > 0) {
+    const weakest = weakPlayers.sort((a, b) => parseFloat(a.kd) - parseFloat(b.kd))[0];
+    insights.push(
+      <div key="player" className="insight-bullet">
+        <span className="insight-icon">&#127919;</span>
+        <p>Look to trade against <strong>{weakest.name}</strong> ({weakest.kd} K/D). Isolating duels against this player gives a statistical advantage.</p>
+      </div>
+    );
+  }
+
+  // 6. One-trick agent pool
+  if (agentData?.playerAgents) {
+    const oneTricks = agentData.playerAgents.filter(p => {
+      if (p.agents.length <= 1) return false;
+      const totalGames = p.agents.reduce((sum, a) => sum + a.count, 0);
+      return totalGames >= 3 && (p.agents[0].count / totalGames) >= 0.8;
+    });
+    if (oneTricks.length > 0) {
+      const p = oneTricks[0];
+      insights.push(
+        <div key="agent" className="insight-bullet">
+          <span className="insight-icon">&#128373;</span>
+          <p><strong>{p.name}</strong> plays {p.agents[0].agent} in {((p.agents[0].count / p.agents.reduce((s, a) => s + a.count, 0)) * 100).toFixed(0)}% of maps. Prepare counter-strategies specifically for this agent.</p>
+        </div>
+      );
+    }
+  }
+
+  if (insights.length === 0) {
+    insights.push(
+      <div key="none" className="insight-bullet">
+        <span className="insight-icon">&#128200;</span>
+        <p>No major exploitable patterns detected. {teamName} plays consistently across sides and maps.</p>
+      </div>
+    );
+  }
+
+  return insights;
 }
 
 function cleanName(name) {

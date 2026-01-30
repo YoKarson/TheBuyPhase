@@ -641,6 +641,51 @@ body {
   margin-top: 0.5rem;
 }
 
+/* How to Win */
+.how-to-win {
+  background: linear-gradient(135deg, #101520 0%, #151a28 100%);
+  border: 2px solid #00aeef;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.how-to-win h3 {
+  color: #00aeef !important;
+  border-bottom-color: #00aeef !important;
+}
+
+.how-to-win-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.insight-bullet {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.75rem;
+  background: rgba(0, 174, 239, 0.05);
+  border-radius: 8px;
+}
+
+.insight-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  width: 2rem;
+  text-align: center;
+}
+
+.insight-bullet p {
+  margin: 0;
+  color: #e0e0f0;
+  line-height: 1.5;
+}
+
+.insight-bullet strong {
+  color: #00aeef;
+}
+
 /* Agent Pools */
 .metrics-section h4 {
   color: #8888a0;
