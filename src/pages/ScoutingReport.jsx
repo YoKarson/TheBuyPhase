@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getTeamAllSeries } from '../api/centralData';
-import { getTeamStatistics, getPlayerStatistics, getTeamPlayers, aggregateMapPool } from '../api/statisticsData';
+import { getTeamStatistics, getPlayerStatistics, getTeamPlayers, fetchAllSeriesData, aggregateMapPool, analyzeRounds } from '../api/statisticsData';
 import { getCached, setCache } from '../api/cache';
 
 export default function ScoutingReport({ team, onBack }) {
@@ -8,6 +8,7 @@ export default function ScoutingReport({ team, onBack }) {
   const [error, setError] = useState(null);
   const [teamStats, setTeamStats] = useState(null);
   const [mapPool, setMapPool] = useState([]);
+  const [roundAnalysis, setRoundAnalysis] = useState(null);
   const [playerStats, setPlayerStats] = useState([]);
   const [loadingStatus, setLoadingStatus] = useState('');
   const [fromCache, setFromCache] = useState(false);
@@ -30,6 +31,7 @@ export default function ScoutingReport({ team, onBack }) {
         console.log(`Loaded ${team.name} from cache`);
         setTeamStats(cached.teamStats);
         setMapPool(cached.mapPool);
+        setRoundAnalysis(cached.roundAnalysis);
         setPlayerStats(cached.playerStats);
         setFromCache(true);
         setLoading(false);
@@ -52,14 +54,21 @@ export default function ScoutingReport({ team, onBack }) {
         if (cancelled) return;
 
         let mapData = [];
+        let rounds = null;
         let allPlayerStats = [];
 
         if (allSeries.length > 0) {
-          // Step 3: Aggregate map pool from all series
-          setLoadingStatus(`Analyzing map pool (${allSeries.length} series)...`);
-          mapData = await aggregateMapPool(allSeries, team.id);
+          // Step 3: Fetch detailed data from all series (map, agents, rounds)
+          setLoadingStatus(`Analyzing ${allSeries.length} series...`);
+          const allGameData = await fetchAllSeriesData(allSeries, team.id);
           if (cancelled) return;
+
+          // Process map pool and round analysis from the fetched data
+          mapData = aggregateMapPool(allGameData);
           setMapPool(mapData);
+
+          rounds = analyzeRounds(allGameData);
+          setRoundAnalysis(rounds);
 
           // Step 4: Get players from most recent series
           setLoadingStatus('Loading player data...');
@@ -100,6 +109,7 @@ export default function ScoutingReport({ team, onBack }) {
         setCache(cacheKey, {
           teamStats: stats,
           mapPool: mapData,
+          roundAnalysis: rounds,
           playerStats: allPlayerStats,
         });
         console.log(`Cached ${team.name} scouting data`);
@@ -200,6 +210,63 @@ export default function ScoutingReport({ team, onBack }) {
           <MetricCard label="Team K/D" value={teamKD} />
         </div>
       </section>
+
+      {/* Attack/Defense Split */}
+      {roundAnalysis && (
+        <section className="metrics-section">
+          <h3>Round Analysis</h3>
+          <div className="metrics-grid">
+            <MetricCard
+              label="Attack Win Rate"
+              value={`${roundAnalysis.attack.total > 0 ? (roundAnalysis.attack.wins / roundAnalysis.attack.total * 100).toFixed(0) : 0}%`}
+              sublabel={`${roundAnalysis.attack.wins}W - ${roundAnalysis.attack.total - roundAnalysis.attack.wins}L`}
+            />
+            <MetricCard
+              label="Defense Win Rate"
+              value={`${roundAnalysis.defense.total > 0 ? (roundAnalysis.defense.wins / roundAnalysis.defense.total * 100).toFixed(0) : 0}%`}
+              sublabel={`${roundAnalysis.defense.wins}W - ${roundAnalysis.defense.total - roundAnalysis.defense.wins}L`}
+            />
+            <MetricCard
+              label="Pistol (Attack)"
+              value={`${roundAnalysis.pistol.attack.total > 0 ? (roundAnalysis.pistol.attack.wins / roundAnalysis.pistol.attack.total * 100).toFixed(0) : 0}%`}
+              sublabel={`${roundAnalysis.pistol.attack.wins}/${roundAnalysis.pistol.attack.total} won`}
+            />
+            <MetricCard
+              label="Pistol (Defense)"
+              value={`${roundAnalysis.pistol.defense.total > 0 ? (roundAnalysis.pistol.defense.wins / roundAnalysis.pistol.defense.total * 100).toFixed(0) : 0}%`}
+              sublabel={`${roundAnalysis.pistol.defense.wins}/${roundAnalysis.pistol.defense.total} won`}
+            />
+          </div>
+          {roundAnalysis.attack.total > 0 && roundAnalysis.defense.total > 0 && (() => {
+            const atkRate = roundAnalysis.attack.wins / roundAnalysis.attack.total * 100;
+            const defRate = roundAnalysis.defense.wins / roundAnalysis.defense.total * 100;
+            const diff = Math.abs(atkRate - defRate);
+            if (diff > 10) {
+              const stronger = atkRate > defRate ? 'attack' : 'defense';
+              const weaker = stronger === 'attack' ? 'defense' : 'attack';
+              return (
+                <div className="insight-box">
+                  <p><strong>Side Tendency:</strong> Significantly stronger on {stronger} ({Math.max(atkRate, defRate).toFixed(0)}% vs {Math.min(atkRate, defRate).toFixed(0)}%). Look to exploit their {weaker} side.</p>
+                </div>
+              );
+            }
+            return null;
+          })()}
+          {(roundAnalysis.pistol.attack.total + roundAnalysis.pistol.defense.total > 0) && (() => {
+            const totalPistol = roundAnalysis.pistol.attack.total + roundAnalysis.pistol.defense.total;
+            const totalPistolWins = roundAnalysis.pistol.attack.wins + roundAnalysis.pistol.defense.wins;
+            const pistolRate = (totalPistolWins / totalPistol * 100).toFixed(0);
+            if (pistolRate <= 40) {
+              return (
+                <div className="insight-box warning">
+                  <p><strong>Pistol Weakness:</strong> Only {pistolRate}% pistol round win rate ({totalPistolWins}/{totalPistol}). Focus on winning pistols for early-half momentum.</p>
+                </div>
+              );
+            }
+            return null;
+          })()}
+        </section>
+      )}
 
       {/* Map Pool Analysis */}
       <section className="metrics-section">
