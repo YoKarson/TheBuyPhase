@@ -159,7 +159,7 @@ export async function aggregateMapPool(seriesList, teamId) {
     try {
       // Add delay between requests (except first one)
       if (i > 0) {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 800));
       }
 
       const mapData = await getSeriesMapData(series.id, teamId);

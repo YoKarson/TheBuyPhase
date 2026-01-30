@@ -74,7 +74,7 @@ export default function Home({ onTeamSelect }) {
             Teams from: {tournament.name}
           </p>
         )}
-        <p className="section-note">Scouting data aggregated from all VCT Americas 2024 tournaments</p>
+        <p className="section-note">Scouting data from VCT Americas 2024 Stage 1</p>
         <div className="teams-grid">
           {teams.map(team => (
             <div

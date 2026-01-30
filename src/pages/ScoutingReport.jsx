@@ -44,7 +44,7 @@ export default function ScoutingReport({ team, onBack }) {
         setTeamStats(stats);
 
         // Step 2: Get all series this team played in 2024
-        setLoadingStatus('Finding all 2024 matches...');
+        setLoadingStatus('Finding Stage 1 matches...');
         const allSeries = await getTeamAllSeries(team.id);
 
         let mapData = [];
@@ -169,14 +169,14 @@ export default function ScoutingReport({ team, onBack }) {
           </div>
         </div>
         <p className="series-info">
-          Data from all VCT Americas 2024 tournaments ({seriesPlayed} series analyzed)
+          Data from VCT Americas 2024 Stage 1 ({seriesPlayed} series analyzed)
           {fromCache && <span className="cache-badge">Cached</span>}
         </p>
       </header>
 
       {/* Team Overview */}
       <section className="metrics-section">
-        <h3>Team Overview (2024 Season)</h3>
+        <h3>Team Overview (Stage 1)</h3>
         <div className="metrics-grid">
           <MetricCard label="Series Played" value={seriesPlayed} />
           <MetricCard label="Maps Played" value={gamesPlayed} />
@@ -226,7 +226,7 @@ export default function ScoutingReport({ team, onBack }) {
 
       {/* Player Performance */}
       <section className="metrics-section">
-        <h3>Player Performance (2024 Season)</h3>
+        <h3>Player Performance (Stage 1)</h3>
         {processedPlayers.length > 0 ? (
           <table className="player-table">
             <thead>

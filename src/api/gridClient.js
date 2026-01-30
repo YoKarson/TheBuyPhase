@@ -6,6 +6,9 @@ const ENDPOINTS = {
   statistics: 'https://api-op.grid.gg/statistics-feed/graphql',
 };
 
+const MAX_RETRIES = 3;
+const BASE_DELAY = 1000;
+
 export async function gridQuery(endpoint, query, variables = {}) {
   const url = ENDPOINTS[endpoint];
 
@@ -13,24 +16,45 @@ export async function gridQuery(endpoint, query, variables = {}) {
     throw new Error(`Unknown endpoint: ${endpoint}`);
   }
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': API_KEY,
-    },
-    body: JSON.stringify({ query, variables }),
-  });
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': API_KEY,
+        },
+        body: JSON.stringify({ query, variables }),
+      });
 
-  if (!response.ok) {
-    throw new Error(`GRID API error: ${response.status} ${response.statusText}`);
+      if (response.status === 429 || response.status >= 500) {
+        if (attempt < MAX_RETRIES) {
+          const delay = BASE_DELAY * Math.pow(2, attempt);
+          console.warn(`Rate limited (${response.status}), retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+      }
+
+      if (!response.ok) {
+        throw new Error(`GRID API error: ${response.status} ${response.statusText}`);
+      }
+
+      const json = await response.json();
+
+      if (json.errors) {
+        throw new Error(`GraphQL error: ${json.errors.map(e => e.message).join(', ')}`);
+      }
+
+      return json.data;
+    } catch (err) {
+      if (attempt < MAX_RETRIES && err.message?.includes('fetch')) {
+        const delay = BASE_DELAY * Math.pow(2, attempt);
+        console.warn(`Network error, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES}):`, err.message);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      throw err;
+    }
   }
-
-  const json = await response.json();
-
-  if (json.errors) {
-    throw new Error(`GraphQL error: ${json.errors.map(e => e.message).join(', ')}`);
-  }
-
-  return json.data;
 }

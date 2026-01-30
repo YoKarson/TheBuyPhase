@@ -1,44 +1,32 @@
 import { gridQuery } from './gridClient';
 
-// All VCT Americas 2024 tournament IDs for comprehensive scouting
+// VCT Americas 2024 Stage 1 tournament IDs
 const VALORANT_2024_TOURNAMENT_IDS = [
-  '757073',  // Kickoff 2024 - Groups A
-  '757074',  // Kickoff 2024 - Playoffs
-  '757101',  // Kickoff 2024 - Play-Ins
-  '757371',  // Kickoff 2024 (main)
   '757481',  // Stage 1 2024 (main)
   '757320',  // Stage 1 2024 - Omega Group
   '757321',  // Stage 1 2024 - Playoffs
-  '774782',  // Stage 2 2024 (main)
-  '774783',  // Stage 2 2024 - Regular Season
 ];
 
-// The "current" tournament - Stage 2 2024 Regular Season (has actual series)
-const CURRENT_TOURNAMENT_ID = '774783';
+const CURRENT_TOURNAMENT_ID = '757320'; // Stage 1 - Omega Group
 
 export const TOURNAMENT_IDS = VALORANT_2024_TOURNAMENT_IDS;
 export const CURRENT_TOURNAMENT = CURRENT_TOURNAMENT_ID;
 
-// Get teams from the current tournament (with fallback)
+// Get teams from all Stage 1 tournaments (merged)
 export async function getCurrentTournamentTeams() {
-  // Try multiple tournament IDs in case one doesn't have series
-  const tournamentsToTry = [
-    '774783',  // Stage 2 2024 - Regular Season
-    '774782',  // Stage 2 2024 (main)
-    '757321',  // Stage 1 2024 - Playoffs
-    '757073',  // Kickoff 2024 - Groups A
-  ];
+  const teamMap = new Map();
 
-  for (const tournamentId of tournamentsToTry) {
+  // Query ALL Stage 1 tournaments and merge teams
+  for (let i = 0; i < VALORANT_2024_TOURNAMENT_IDS.length; i++) {
+    const tournamentId = VALORANT_2024_TOURNAMENT_IDS[i];
+
+    if (i > 0) {
+      await delay(800);
+    }
+
     try {
       const query = `
         query GetSeriesByTournament($tournamentId: ID!) {
-          tournament(id: $tournamentId) {
-            id
-            name
-            startDate
-            endDate
-          }
           allSeries(
             filter: { tournamentId: $tournamentId }
             first: 50
@@ -61,8 +49,6 @@ export async function getCurrentTournamentTeams() {
 
       const data = await gridQuery('centralData', query, { tournamentId });
 
-      // Extract unique teams
-      const teamMap = new Map();
       for (const edge of data.allSeries.edges) {
         for (const team of edge.node.teams) {
           if (team.baseInfo?.id && !teamMap.has(team.baseInfo.id)) {
@@ -74,24 +60,15 @@ export async function getCurrentTournamentTeams() {
           }
         }
       }
-
-      // If we found teams, return them
-      if (teamMap.size > 0) {
-        console.log(`Found ${teamMap.size} teams in tournament ${tournamentId}`);
-        return {
-          tournament: data.tournament,
-          teams: Array.from(teamMap.values()).sort((a, b) => a.name.localeCompare(b.name)),
-        };
-      }
+      console.log(`Found ${teamMap.size} teams after tournament ${tournamentId}`);
     } catch (err) {
       console.warn(`Failed to fetch from tournament ${tournamentId}:`, err.message);
     }
   }
 
-  // Fallback: return empty
   return {
-    tournament: { name: 'VCT Americas 2024' },
-    teams: [],
+    tournament: { name: 'VCT Americas 2024 - Stage 1' },
+    teams: Array.from(teamMap.values()).sort((a, b) => a.name.localeCompare(b.name)),
   };
 }
 
@@ -108,7 +85,7 @@ export async function getTeamAllSeries(teamId) {
 
     // Add delay between requests (except first one)
     if (i > 0) {
-      await delay(400);
+      await delay(800);
     }
 
     try {
