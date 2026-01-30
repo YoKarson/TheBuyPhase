@@ -43,15 +43,25 @@ export async function gridQuery(endpoint, query, variables = {}) {
       const json = await response.json();
 
       if (json.errors) {
-        throw new Error(`GraphQL error: ${json.errors.map(e => e.message).join(', ')}`);
+        const errorMsg = json.errors.map(e => e.message).join(', ');
+        const isRateLimit = errorMsg.toLowerCase().includes('rate limit');
+
+        if (isRateLimit && attempt < MAX_RETRIES) {
+          const retryDelay = BASE_DELAY * Math.pow(2, attempt);
+          console.warn(`GraphQL rate limit hit, retrying in ${retryDelay}ms (attempt ${attempt + 1}/${MAX_RETRIES})`);
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
+          continue;
+        }
+
+        throw new Error(`GraphQL error: ${errorMsg}`);
       }
 
       return json.data;
     } catch (err) {
-      if (attempt < MAX_RETRIES && err.message?.includes('fetch')) {
-        const delay = BASE_DELAY * Math.pow(2, attempt);
-        console.warn(`Network error, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES}):`, err.message);
-        await new Promise(resolve => setTimeout(resolve, delay));
+      if (attempt < MAX_RETRIES && (err.message?.includes('fetch') || err.message?.includes('rate limit'))) {
+        const retryDelay = BASE_DELAY * Math.pow(2, attempt);
+        console.warn(`Error, retrying in ${retryDelay}ms (attempt ${attempt + 1}/${MAX_RETRIES}):`, err.message);
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
         continue;
       }
       throw err;

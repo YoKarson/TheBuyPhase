@@ -13,6 +13,8 @@ export default function ScoutingReport({ team, onBack }) {
   const [fromCache, setFromCache] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function fetchData() {
       if (!team?.id) {
         setError('No team selected');
@@ -38,14 +40,16 @@ export default function ScoutingReport({ team, onBack }) {
         setLoading(true);
         setError(null);
 
-        // Step 1: Get team stats from all 2024 tournaments
+        // Step 1: Get team stats
         setLoadingStatus('Fetching team statistics...');
         const stats = await getTeamStatistics(team.id);
+        if (cancelled) return;
         setTeamStats(stats);
 
-        // Step 2: Get all series this team played in 2024
+        // Step 2: Get all series this team played
         setLoadingStatus('Finding Stage 1 matches...');
         const allSeries = await getTeamAllSeries(team.id);
+        if (cancelled) return;
 
         let mapData = [];
         let allPlayerStats = [];
@@ -54,17 +58,20 @@ export default function ScoutingReport({ team, onBack }) {
           // Step 3: Aggregate map pool from all series
           setLoadingStatus(`Analyzing map pool (${allSeries.length} series)...`);
           mapData = await aggregateMapPool(allSeries, team.id);
+          if (cancelled) return;
           setMapPool(mapData);
 
           // Step 4: Get players from most recent series
           setLoadingStatus('Loading player data...');
           const players = await getTeamPlayers(allSeries[0].id, team.id);
+          if (cancelled) return;
 
           // Pause before fetching player stats to avoid rate limiting
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 2000));
 
           // Fetch player stats sequentially with delay to avoid rate limiting
           for (const player of players) {
+            if (cancelled) return;
             setLoadingStatus(`Loading stats for ${player.name}...`);
             try {
               // Check player cache first
@@ -73,7 +80,8 @@ export default function ScoutingReport({ team, onBack }) {
 
               if (!pStats) {
                 // Longer delay between requests to avoid rate limiting
-                await new Promise(resolve => setTimeout(resolve, 750));
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                if (cancelled) return;
                 pStats = await getPlayerStatistics(player.id);
                 setCache(playerCacheKey, pStats);
               }
@@ -86,6 +94,8 @@ export default function ScoutingReport({ team, onBack }) {
           setPlayerStats(allPlayerStats);
         }
 
+        if (cancelled) return;
+
         // Save to cache
         setCache(cacheKey, {
           teamStats: stats,
@@ -96,14 +106,16 @@ export default function ScoutingReport({ team, onBack }) {
 
         setLoadingStatus('');
       } catch (err) {
+        if (cancelled) return;
         console.error('Failed to fetch scouting data:', err);
         setError(err.message);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
     fetchData();
+    return () => { cancelled = true; };
   }, [team]);
 
   if (loading) {

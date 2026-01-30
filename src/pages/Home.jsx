@@ -9,6 +9,8 @@ export default function Home({ onTeamSelect }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function fetchData() {
       // Check cache first
       const cacheKey = 'tournament_teams';
@@ -26,6 +28,7 @@ export default function Home({ onTeamSelect }) {
         setLoading(true);
         setError(null);
         const data = await getCurrentTournamentTeams();
+        if (cancelled) return;
         setTournament(data.tournament);
         setTeams(data.teams);
 
@@ -33,14 +36,16 @@ export default function Home({ onTeamSelect }) {
         setCache(cacheKey, data);
         console.log('Cached tournament teams');
       } catch (err) {
+        if (cancelled) return;
         console.error('Failed to fetch teams:', err);
         setError(err.message);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
     fetchData();
+    return () => { cancelled = true; };
   }, []);
 
   if (loading) {

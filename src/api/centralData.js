@@ -1,13 +1,11 @@
 import { gridQuery } from './gridClient';
 
-// VCT Americas 2024 Stage 1 tournament IDs
+// VCT Americas 2024 Stage 1 - only Playoffs has accessible series data
 const VALORANT_2024_TOURNAMENT_IDS = [
-  '757481',  // Stage 1 2024 (main)
-  '757320',  // Stage 1 2024 - Omega Group
   '757321',  // Stage 1 2024 - Playoffs
 ];
 
-const CURRENT_TOURNAMENT_ID = '757320'; // Stage 1 - Omega Group
+const CURRENT_TOURNAMENT_ID = '757321'; // Stage 1 - Playoffs
 
 export const TOURNAMENT_IDS = VALORANT_2024_TOURNAMENT_IDS;
 export const CURRENT_TOURNAMENT = CURRENT_TOURNAMENT_ID;
