@@ -746,3 +746,297 @@ body {
   color: #50e080;
   text-transform: uppercase;
 }
+
+/* Win Type Section */
+.win-type-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 640px) {
+  .win-type-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.win-type-card {
+  background: linear-gradient(135deg, #1a1a25 0%, #1e1e30 100%);
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 1px solid #3a3a4a;
+}
+
+.win-type-card h4 {
+  color: #ffffff;
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+}
+
+.win-type-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.win-type-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.win-type-bar-label {
+  width: 120px;
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  color: #b0b0c0;
+}
+
+.win-type-bar-track {
+  flex: 1;
+  height: 20px;
+  background: #252535;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.win-type-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.win-type-bar-value {
+  width: 80px;
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  color: #f0f0f5;
+  text-align: right;
+}
+
+.win-type-split {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: #8888a0;
+}
+
+/* Economy Section */
+.economy-breakdown {
+  margin-top: 1.25rem;
+}
+
+.economy-breakdown h4 {
+  color: #8888a0;
+  font-size: 0.85rem;
+  margin: 0 0 0.75rem 0;
+}
+
+.econ-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  background: linear-gradient(135deg, #1a1a25 0%, #1e1e30 100%);
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 1px solid #3a3a4a;
+}
+
+.econ-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.econ-bar-label {
+  width: 80px;
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  color: #b0b0c0;
+  font-weight: 500;
+}
+
+.econ-bar-track {
+  flex: 1;
+  height: 22px;
+  background: #252535;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.econ-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+  min-width: 2px;
+}
+
+.econ-bar-value {
+  width: 40px;
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  color: #f0f0f5;
+  font-weight: 600;
+  text-align: right;
+}
+
+/* Momentum Section */
+.momentum-details {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.momentum-row {
+  background: linear-gradient(135deg, #1a1a25 0%, #1e1e30 100%);
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 1px solid #3a3a4a;
+}
+
+.momentum-row h4 {
+  color: #ffffff;
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9rem;
+}
+
+.momentum-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.momentum-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.momentum-stat-label {
+  color: #b0b0c0;
+  font-size: 0.85rem;
+}
+
+.momentum-stat-value {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #f0f0f5;
+}
+
+.momentum-stat-sub {
+  color: #8888a0;
+  font-size: 0.8rem;
+}
+
+.momentum-text {
+  color: #e0e0f0;
+  font-size: 0.9rem;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.momentum-text strong {
+  color: #00aeef;
+}
+
+/* Section description (small) */
+.section-desc-sm {
+  color: #8888a0;
+  font-size: 0.8rem;
+  margin: -0.5rem 0 1rem 0;
+}
+
+/* First Blood Trends */
+.fb-trends {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.fb-trend-card {
+  background: linear-gradient(135deg, #1a1a25 0%, #1e1e30 100%);
+  border-radius: 10px;
+  padding: 1rem;
+  border: 1px solid #3a3a4a;
+}
+
+.fb-trend-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
+.fb-trend-player {
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 0.95rem;
+}
+
+.fb-trend-rate {
+  font-weight: 700;
+  color: #00aeef;
+  font-size: 0.9rem;
+}
+
+.fb-trend-details {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.fb-trend-agent {
+  display: inline-block;
+  background: #252535;
+  border: 1px solid #00aeef;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  color: #00aeef;
+  text-transform: capitalize;
+  font-weight: 500;
+}
+
+.fb-trend-map {
+  display: inline-block;
+  background: #252535;
+  border: 1px solid #a080ff;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  color: #a080ff;
+  font-weight: 500;
+}
+
+.fb-trend-bar-track {
+  height: 6px;
+  background: #252535;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.fb-trend-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00aeef, #50e080);
+  border-radius: 3px;
+}
+
+.fb-trend-sides {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: #8888a0;
+  margin-bottom: 0.25rem;
+}
+
+.fb-trend-sample {
+  font-size: 0.7rem;
+  color: #6a6a80;
+}

@@ -9,7 +9,7 @@ const ENDPOINTS = {
 const MAX_RETRIES = 3;
 const BASE_DELAY = 1000;
 
-export async function gridQuery(endpoint, query, variables = {}) {
+export async function gridQuery(endpoint, query, variables = {}, extraHeaders = {}) {
   const url = ENDPOINTS[endpoint];
 
   if (!url) {
@@ -23,6 +23,7 @@ export async function gridQuery(endpoint, query, variables = {}) {
         headers: {
           'Content-Type': 'application/json',
           'x-api-key': API_KEY,
+          ...extraHeaders,
         },
         body: JSON.stringify({ query, variables }),
       });
